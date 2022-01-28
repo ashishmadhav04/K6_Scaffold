@@ -1,0 +1,23 @@
+{
+    "Environments":
+    [
+
+        {
+          "environment":"Beta",
+          "host_url":"",
+          "access_token_url": "",
+          "audience": "",
+          "Client_Id": "",
+          "Client_Secret": ""
+        },
+        {
+          "environment":"Test",
+          "reader_url":"",
+          "reader_access_token_url": "",
+          "reader_audience": "",
+          "reader_Client_Id": "",
+          "reader_Client_Secret": ""
+        }
+    ],
+    "TestName": "Load Test"
+}

@@ -1,0 +1,64 @@
+attach_workspace: &attach_workspace
+  attach_workspace:
+    at: '.'
+
+persist_workspace: &persist_workspace
+  persist_to_workspace:
+    root: '.'
+    paths: [ '.' ]
+
+version: 2
+jobs:
+  beta_load_test:
+    working_directory: ~/project
+    docker:
+    - image: loadimpact/k6:latest
+    environment:
+    - DURATION: 30m
+    - CORE_ID: 10010
+    steps:
+    - checkout
+    - attach_workspace:
+        at: .
+    - run:
+        name: Show test info
+        command: showtestinfo.sh
+    - run:
+        name: Run load test
+        command: |
+          mkdir /perfTestResults
+          # REPLACE THE TEST DURATION IN CONFIG FILE
+          sed -i "s/load_duration/30m/g" ./Tests.Performance/PerformanceConfig.js
+          # RUN LOAD TEST
+          service telegraf start
+          k6 run \
+          -o influxdb=http://localhost:8186 \
+          -e TestType="Load Test" \
+          -e Environment="Beta" \
+          -e Client_Id="${CLIENT_ID_K6}" \
+          -e Client_Secret="${CLIENT_SECRET_K6}" \
+          --summary-export=/perfTestResults/loadTestResults.json \
+          ./Tests.Performance/TestScript.js -q
+        no_output_timeout: 45m
+    - store_artifacts:
+        path: /perfTestResults/
+
+workflows:
+  version: 2
+  pipeline:
+    jobs:
+      - beta_load_test:
+          filters:
+            branches:
+              only:
+                - master
+
+  weekly:
+    triggers:
+    - schedule:
+        cron: 30 11 * * 4
+        filters:
+          branches:
+            only: master
+    jobs:
+    - beta_load_test
